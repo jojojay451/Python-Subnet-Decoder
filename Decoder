@@ -1,0 +1,134 @@
+import sys
+import os
+
+    
+    
+    
+    
+def make_ip_num (ipstring = "102.3.3.102", debug=False):
+    if debug==True:
+        print("we are working on this ip:" + ipstring)
+
+    #break ip string into an ip list
+    iplist=ipstring.split(".")
+
+
+    #convert each item on the list into its hex value
+    for i in range(4):
+        iplist[i]=format(int(iplist[i]), '02x')
+    ##print("\niplist: in hex")
+    ##print(iplist)
+
+    ##join the list into a single hex value
+    iphex=''.join(iplist)
+    ##print("\niphex:")
+    ##print(iphex)
+
+    ##convert iphex into decimal
+    ipdec=int(iphex,16)
+    if debug==True:
+        print("ip as a decimal:" +str(ipdec))
+    return ipdec
+
+def calculate (ipstring = "102.3.3.102", cidr = 30, debug=False, myformat='08x'):
+    if debug==True:
+        print("we are working on this ip:" + ipstring)
+
+    ipdec=make_ip_num(ipstring, debug)
+    
+    ##calculate host bits number of addresses
+    numhostbits=32-cidr
+    ##print("debug:numhostbits"+ str(numhostbits))
+    addressnum=2**numhostbits
+    addressnum=addressnum-2
+    if debug==True:
+        print("\nnetwork info:")
+        print("\tcidr:" +str(cidr))
+        print("\tnumber of addreses (not including netid and broadcast):" +str(addressnum))
+    ##print(format(addressnum,myformat))
+
+    ##find netmask
+    netmask='1'*numhostbits
+    #netmask=int("0xffffffff",16) ^ int(netmask,2)
+    if debug==True:
+        print("\twildcard netmask:" + str(format(int(netmask,2),myformat)))
+    netmask=int(netmask,2)^int("0xffffffff",16)
+    if debug==True:
+        print("\tnetmask:" + str(format(netmask,myformat)))
+    ##print(format(netmask,myformat))
+
+    ##find netid
+    netid = netmask & ipdec
+    if debug==True:
+        print("\nIp addrs:")
+        print("\tnetid:"+str(netid) +" "+ format(netid,myformat))
+    ##print(format(netid,myformat))
+
+    ##find first, last, broadcast
+    first=netid+1
+    if debug==True:
+        print("\tfirst:"+str(first)+" "+ format(first,myformat))
+    last=netid+addressnum
+    if debug==True:
+        print("\tlast:"+ str(last)+" "+ format(last,myformat))
+    broadcast=netid+addressnum+1
+    if debug==True:
+        print("\tbroadcast"+ str(broadcast)+" "+ format(broadcast,myformat))
+    mytuple= (ipdec, netid, first, last, broadcast)
+    if debug==True:
+        print("\tmytuple:"+ str(mytuple)+" "+ format(broadcast,myformat))
+    return(mytuple)
+    
+def make_ip_str (ipnum = 3232243325):
+    ##convert to hex
+    iphex= str(format(ipnum, '08x'))
+    
+    ##break hex into list
+    ##print(iphex)
+    iplist=["","","",""]
+    for i in range(4):
+        iplist[i]='0x'+iphex[2*i:2*i+2]
+
+    ##print(iplist)
+    
+    ##convert hex to dec
+    for i in range(4):
+        iplist[i]=str(int(iplist[i], 16))
+    ##print(iplist)
+    ipstring='.'.join(iplist)
+    ##print(ipstring)
+    return(ipstring)
+    
+def prettyprint (mytuple):
+    myformat='d'
+    ##print(results)
+    mylist=list(mytuple)
+    ##print(mylist)
+    starting_ip=mylist[0]
+    netid=mylist[1]
+    first=mylist[2]
+    last=mylist[3]
+    broadcast=mylist[4]
+    print("Ip addrs:")
+    print("\tstarting_ip:\t"+make_ip_str(starting_ip))
+    print("\tnetid:\t\t"+make_ip_str(netid))
+    print("\tfirst:\t\t"+make_ip_str(first))
+    print("\tlast:\t\t"+ make_ip_str(last))
+    print("\tbroadcast\t"+ make_ip_str(broadcast))
+    
+
+
+
+##in line code
+if __name__ == '__main__':
+    if len(sys.argv) == 3:
+        ##make sure arguments are valid
+        if (isinstance(sys.argv[1], str) and sys.argv[2].isdigit()):
+            ip_address = str(sys.argv[1])
+            cidr= int(sys.argv[2])
+            results=calculate(ip_address,cidr)
+            prettyprint(results)
+        else:
+            print ("script takes two arguments: first an IP address, then a cidr value\nexample:\nscript.py 1.2.3.4 24")
+    else:
+        print("script takes two arguments: first an IP address, then a cidr value\nexample:\nscript.py 1.2.3.4 24")
